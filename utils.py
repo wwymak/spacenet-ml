@@ -39,6 +39,25 @@ def scale_percentile(matrix):
     return matrix
 
 
+def create_mask(img_id, mask_geojson, reference_im_path, output_mask_folder, road_mask_width=20):
+    outfile = output_mask_folder / f"{img_id}.png"
+    reference_im = rasterio.open(str(reference_im_path))
+    road_mask = np.zeros((1300, 1300))
+    df = gpd.read_file(mask_geojson)
+    if len(df) > 0:
+
+        try:
+            road_mask = sol.vector.mask.road_mask(df,
+                                                  shape=(1300, 1300), reference_im=reference_im,
+                                                  width=road_mask_width, meters=False, burn_value=burn_value,
+                                                  out_type=int)
+
+
+        except Exception as e:
+            print(e, mask_fname)
+            pass
+    skimage.io.imsave(outfile, road_mask.astype('uint8'))
+
 def create_small_tiles(img_filepath, mask_filepath, im_id, save_dir_rgb, save_dir_mask, new_img_height=512):
     img_rgb = sktif.imread(str(img_filepath))
     img_rgb = (255 * scale_percentile(img_rgb)).astype(np.uint8)
